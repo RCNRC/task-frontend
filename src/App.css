@@ -1,5 +1,10 @@
 .App {
   text-align: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .App-logo {
@@ -35,4 +40,41 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.buttons_field{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 10%;
+}
+
+.bottom_field {
+  position: fixed;
+  left: 0;
+  top: 10%;
+  width: 100%;
+  height: 90%;
+}
+
+.buttons_for_creation_plan_field{
+  position: fixed;
+  left: 0;
+  top: 10%;
+  width: 15%;
+  height: 90%;
+}
+
+.canvas_field{
+  position: fixed;
+  left: 15%;
+  top: 10%;
+  width: 85%;
+  height: 90%;
+  /*overflow: scroll;*/
+}
+
+.create_new_plan_button, .get_all_plans_button, .get_report, .bottom_field{
+  /*visibility: hidden;*/ /*Когда будешь показывать раскомментируй*/
 }

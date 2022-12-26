@@ -1,10 +1,11 @@
 import React from "react";
 import * as d3 from "d3";
 import "./ObjectsLibraryStyle.css";
-import {add_circle_to_grid, add_object_on_canvas} from "./CanvasField";
+import {add_object_on_canvas} from "./CanvasField";
+import axios from "axios";
 
-let objs_num=0;
-let first_open:boolean = true;
+let objs_num = 0;
+let first_open: boolean = true;
 // rect: x, y, width, height
 // circle: cx, cy, r
 // ellipse: cx, cy, rx, ry
@@ -12,7 +13,7 @@ let first_open:boolean = true;
 // polyline: points, stroke-width(num), stroke, fill
 // polygon: points, stroke-width(num), stroke, fill
 // path: d, stroke-width(num), stroke, fill
-let default_objects_library/*:string[][][]*/ = [
+let default_objects_library:string[][][] = [
     [["circle and circle", "metadata for circle_circle"], ["circle", "60", "60", "30"], ["circle", "10", "10", "8"]],
     [["rect and circle", "just metadata"], ["rect", "80", "60", "20", "40"], ["circle", "10", "10", "25"]],
     [["one ellipse", "just metadata"], ["ellipse", "80", "60", "20", "40"]],
@@ -22,12 +23,46 @@ let default_objects_library/*:string[][][]*/ = [
     [["one path", "metadata"], ["path", "M 20 23 Q 40 205, 50 230 T 90 230", "3", "black", "black"]],
 ];
 
-function initialize_default_objects(){
-    let default_objects = default_objects_library;
-    default_objects.forEach((object)=>{add_object_to_library(object);});
+export function post_to_backend_default_plans() {
+    default_objects_library.forEach((default_object: string[][]) => {
+        let json_file = JSON.stringify(default_object);
+        axios({
+            url: '',
+            params: {'data-type': 'object'}, // чтобы серверу узнать, что я присылаю на сохранение
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            data: json_file,
+        })
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+    });
 }
 
-export function add_object_to_library(object:any/*: string[][]*/){
+function initialize_default_objects() {
+    axios({
+        url: '/library',
+        //params: {'data-type': 'object'}, // чтобы серверу узнать, что я присылаю на сохранение
+        method: 'get',
+        //headers: {'Content-Type': 'application/json'},
+    })
+        .then(function (response) {
+            console.log(response);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+    let default_objects = default_objects_library; // аналогично нужно его получить, а не изначально иметь.
+    default_objects.forEach((object) => {
+        add_object_to_library(object);
+    });
+}
+
+export function add_object_to_library(object: string[][]) {
     let object_name = object[0][0];
     let el = d3.select(".objects_library");
     let par = el.append("p").attr("class", `library_p_${objs_num}`);
@@ -35,20 +70,20 @@ export function add_object_to_library(object:any/*: string[][]*/){
     p.append("text").text(`Название объекта: ${object_name}`);
     let div = par.append("div").attr("class", `objects_${objs_num}_body`);
     let svg = div.append("svg").attr("class", `object_${objs_num}_svg`).style("overflow", "scroll").style("background-color", "white");
-    for(let j:number=1; j<object.length; j++){
-        if(object[j][0]==="rect")
+    for (let j: number = 1; j < object.length; j++) {
+        if (object[j][0] === "rect")
             svg.append(object[j][0]).attr("x", parseFloat(object[j][1])).attr("y", parseFloat(object[j][2])).attr("width", parseFloat(object[j][3])).attr("height", parseFloat(object[j][4]));
-        else if(object[j][0]==="circle")
+        else if (object[j][0] === "circle")
             svg.append(object[j][0]).attr("cx", parseFloat(object[j][1])).attr("cy", parseFloat(object[j][2])).attr("r", parseFloat(object[j][3]));
-        else if(object[j][0]==="ellipse")
+        else if (object[j][0] === "ellipse")
             svg.append(object[j][0]).attr("cx", parseFloat(object[j][1])).attr("cy", parseFloat(object[j][2])).attr("rx", parseFloat(object[j][3])).attr("ry", parseFloat(object[j][4]));
-        else if(object[j][0]==="line")
+        else if (object[j][0] === "line")
             svg.append(object[j][0]).attr("x1", parseFloat(object[j][1])).attr("x2", parseFloat(object[j][2])).attr("y1", parseFloat(object[j][3])).attr("y2", parseFloat(object[j][4])).attr("stroke-width", parseFloat(object[j][5])).style("stroke", object[j][6]).attr("fill", object[j][7]);
-        else if(object[j][0]==="polyline")
+        else if (object[j][0] === "polyline")
             svg.append(object[j][0]).attr("points", object[j][1]).attr("stroke-width", parseFloat(object[j][2])).style("stroke", object[j][3]).attr("fill", object[j][4]);
-        else if(object[j][0]==="polygon")
+        else if (object[j][0] === "polygon")
             svg.append(object[j][0]).attr("points", object[j][1]).attr("stroke-width", parseFloat(object[j][2])).style("stroke", object[j][3]).attr("fill", object[j][4]);
-        else if(object[j][0]==="path")
+        else if (object[j][0] === "path")
             svg.append(object[j][0]).attr("d", object[j][1]).attr("stroke-width", parseFloat(object[j][2])).style("stroke", object[j][3]).attr("fill", object[j][4]);
     }
     let divdiv = div.append("div");
@@ -58,35 +93,43 @@ export function add_object_to_library(object:any/*: string[][]*/){
     let delete_button_p = divdiv.append("p");
     let add_button = add_button_p.append("button");
     add_button.append("text").text("Добавить объект на канвас");
-    add_button.on("mousedown", ()=>{add_object_on_canvas(object);});
+    add_button.on("mousedown", () => {
+        add_object_on_canvas(object);
+    });
     let delete_button = delete_button_p.append("button");
     delete_button.append("text").text("Удалить объект из библиотеки");
-    delete_button.on("mousedown", ()=>{par.remove();});
+    delete_button.on("mousedown", () => {
+        par.remove();
+    });
 
     objs_num++;
 }
 
-export function objects_library_visualize(){
-    if(first_open) {
+export function objects_library_visualize() {
+    if (first_open) {
         initialize_default_objects();
         first_open = false;
     }
     let el = d3.select(".objects_library");
     let el_oth = d3.select(".plans_library");
-    if(el_oth.style("visibility")==="visible")
+    if (el_oth.style("visibility") === "visible")
         el_oth.style("visibility", "hidden");
-    if(el.style("visibility")==="hidden")
+    if (el.style("visibility") === "hidden")
         el.style("visibility", "visible");
     else
         el.style("visibility", "hidden");
 }
 
-export class ObjectsLibrary extends React.Component{
+export class ObjectsLibrary extends React.Component {
     render() {
         return (
             <div className={"objects_library"}>
                 <p>Библиотека объектов</p>
-                <p><button className={"add_new_object_to_library_button"} onMouseDown={()=>{}}>(ПУСТО) Добавить объект в библиотеку</button></p>
+                <p>
+                    <button className={"add_new_object_to_library_button"} onMouseDown={() => {
+                    }}>(ПУСТО) Добавить объект в библиотеку
+                    </button>
+                </p>
             </div>
         );
     }
